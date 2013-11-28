@@ -70,8 +70,11 @@
       d/dot
       d/show!))
 
-(defn save-tree! [class & {:keys [format] :or {format :pdf}}]
-  (-> (apply concat (make-tree-graph class))
-      d/digraph
-      d/dot
-      (d/save! (str class ".pdf") {:format format})))
+(defn save-tree!
+  ([class]
+     (save-tree! class :pdf))
+  ([class format]
+     (-> (apply concat (make-tree-graph class))
+         d/digraph
+         d/dot
+         (d/save! (str class "." (name format)) {:format format}))))
