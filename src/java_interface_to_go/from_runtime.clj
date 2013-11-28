@@ -71,7 +71,7 @@
       d/dot
       d/show!))
 
-(defn save-tree [class & {:keys [format] :or {format :pdf}}]
+(defn save-tree! [class & {:keys [format] :or {format :pdf}}]
   (-> (apply concat (make-tree-graph class))
       d/digraph
       d/dot
