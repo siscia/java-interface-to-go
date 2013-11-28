@@ -45,8 +45,7 @@
             next-cl-to-expand (set (conj
                                     (:interface next-expansion)
                                     (:super-class next-expansion)))
-            already-expans (conj already-expans (first actual-to-expand))
-            _ (println actual-to-expand)]
+            already-expans (conj already-expans (first actual-to-expand))]
         (recur already-expans
                (remove nil? (concat (drop 1 actual-to-expand) next-cl-to-expand))
                (conj tree next-expansion)))
