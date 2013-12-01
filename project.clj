@@ -7,4 +7,4 @@
                  [org.clojure/tools.cli "0.2.4"]
                  [org.clojure/core.async "0.1.256.0-1bf8cf-alpha"]
                  [dorothy "0.0.4"]]
-  :main java-interface-to-go.from-source)
+  :main java-interface-to-go.core)
