@@ -16,3 +16,5 @@ Basic idea is to generate an interface that includes all that input so I can pas
 What about a function that takes on argument or more then one then ?
 
 Need to think about that.
+
+Also most methodes define right now are methods that are already define importing the interfaces, the method must be only the ones defined strictly in the class.
