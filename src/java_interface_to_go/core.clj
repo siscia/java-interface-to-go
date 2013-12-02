@@ -1,71 +1,88 @@
 (ns java-interface-to-go.core
   (:use [clojure.tools.cli :only [cli]])
-  (:use [clojure.java.io :only [writer file]]))
+  (:use [clojure.java.io :only [writer]])
+  (:use [java-interface-to-go.from-runtime :only [make-tree]]))
 
-(defn resume-interface [str]
-  (when-let [name (is-interface? str)]
-    (let [methods (get-methods str)
-          not-nil (remove #(nil? (second %)) methods)
-          meth (mapv (fn [a]
-                       {:name (nth a 2)
-                        :return-type (nth a 1)
-                        :params (type-params (nth a 3))})
-                not-nil)]
-      {:name (get-name-interface str)
-       :extendee (get-extendee str)
-       :methods meth})))
+;; software to be run as command line, it takes in input a string, and it evals the class it represent:
+;; (class (eval input-str))
+;; it is dangerous but it is suppose to be used only to generate other source file it stilll should be fine.
+;; then the it spit the go interfaces.
+
+
 
 (defn capitalize-first-only [s]
   (when (> (count s) 0)
     (str (clojure.string/capitalize (subs s 0 1))
          (subs s 1))))
 
+(defn write-name [name wrtr]
+  (.write wrtr (str "package " name "\n")))
+
+(defn write-extended [super-class interface wrtr]
+  (.write wrtr (str "\n" "import(" "\n"))
+  (when super-class
+    (.write wrtr (str "\t" "\"" (.getName super-class) "\"" "\n")))
+  (when interface
+    (doseq [inter interface]
+      (.write wrtr (str "\t" "\""
+                        (-> (.getName inter)
+                            clojure.string/trim
+                            clojure.string/lower-case)
+                        "\"" "\n"))))
+  (.write wrtr ")\n"))
+
+(defn write-import-super-class [super-class wrtr]
+  (when super-class
+    (.write wrtr (str "\t"
+                      (-> super-class .getName str
+                          clojure.string/trim
+                          clojure.string/lower-case)
+                      ".Interface\n"))))
+
+(defn write-import-extended-interface [interface wrtr]
+  (doseq [inter interface]
+    (.write wrtr (str "\t"
+                      (-> inter .getName str
+                          clojure.string/trim
+                          clojure.string/lower-case)
+                      ".Interface" "\n"))))
+
+(defn write-methods [meth wrtr]
+  (doseq [meth meth]
+    (let [parameter-string (clojure.string/join ", "
+                                                (map #(.getName %) (:parameter-types meth)))]
+      (.write wrtr (str "\t"
+                        (.getName (:return-type meth)) " "
+                        (capitalize-first-only (:method-name meth))
+                        "(" parameter-string ")" "\n")))))
+
+(defn write-interface [super-class interface meth wrtr]
+  (.write wrtr (str "\n" "type Interface interface{" "\n"))
+  (write-import-super-class super-class wrtr)
+  (write-import-extended-interface interface wrtr)
+  (write-methods meth wrtr)
+  (.write wrtr (str "}" "\n")))
+
 (defn make-file [source dir]
-  (if-let [resume (resume-interface source)]
-    (let [file-name (-> (str (resume :name))
-                        clojure.string/lower-case)]
-      (with-open [wrtr (writer (str dir file-name ".go"))]
-        (.write wrtr (str "package " file-name "\n"))
-        (.write wrtr "\nimport(\n")
-        (doseq [x (:extendee resume)]
-          (.write wrtr (str "    \"" (-> (clojure.string/trim x)
-                                         clojure.string/lower-case) "\"\n")))
-        (.write wrtr ")\n")
-        (.write wrtr (str "\ntype Interface interface{\n"))
-        (doseq [ex (:extendee resume)]
-          (.write wrtr (str "    " (-> (clojure.string/trim ex)
-                                       clojure.string/lower-case) ".Interface\n")))
-        (doseq [meth (:methods resume)]
-          (.write wrtr (str "    "
-                            (:return-type meth) " "
-                            (capitalize-first-only
-                             (:name meth))
-                            "("
-                            (:params meth)
-                            ")\n")))
-        (.write wrtr "}"))
-      (str file-name ".go"))))
+  (let [file-name (-> (str dir (:name source) ".go")
+                      clojure.string/lower-case)]
+    (with-open [wrtr (writer file-name)]
+      (println "prova")
+      (write-name (:name source) wrtr)
+      (write-extended (:super-class source) (:interface source) wrtr)
+      (write-interface (:super-class source)
+                       (:interface source)
+                       (:methods source)
+                       wrtr)
+      (println file-name))
+    file-name))
 
 (defn arguments-receiver [args]
   (cli args
-       ["-f" "--file" "Single interface.java file to convert to a interface.go file" :default nil]
-       ["-d" "--directory" "Whole directory of file that will be analyzed" :default nil]
-       ["-o" "--output" "Directory where place the output file(s)" :dafault ""]))
+       ["-o" "--output" "Directory where place the output file(s)" :default ""]))
 
-(defn -main [& args]
-  (let [[options args banner] (arguments-receiver args)]
-    (when-let [dir (:directory options)]
-      (doseq [files (file-seq (file dir))]
-        (when (.isFile files)
-          (try (if-not (make-file (slurp files) (:output options))
-                 (println files))
-            (catch Exception e (println files ":<--- Exception"))
-            (catch Error e (println files ":<--- Error, STACK"))))))
-    (when-let [file-name (:file options)]
-      (when (.isFile (file file-name))
-        (try
-          (if-not (make-file (slurp file-name) (:output options))
-            (println file-name))
-          (catch Exception e (println file-name ":<--- Exception"))
-          (catch Error e (println file-name ":<--- Error, STACK")))))))
-
+(defn -main [input & args]
+  (let [[options args banner] (arguments-receiver args)
+        tree (make-tree (class [:a]))]
+    (println (options :output))
+    (make-file (first tree) (options :output))))
