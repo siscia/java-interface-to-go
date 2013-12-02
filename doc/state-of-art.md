@@ -1,7 +1,7 @@
 # The State of Art
 ## of the library till now.
 
-## Dec. 03 2013
+## Dec. 02 2013 Very late at night but still the 02nd
 ---------------
 Thinking are arising several issues.
 
@@ -34,6 +34,8 @@ For what I have understand an interface in Go is defined simply by implementing 
 Sound wonderful...
 
 Probably is better to take a bottom-up approach; the goal for now is implemeting a simple clojure list.
+
+Not sure anymoer if is a good idea to start from the java interfaces or if it is better to start from the documentation.
 
 ## Dec. 02 2013
 ---------------
