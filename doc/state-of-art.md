@@ -1,6 +1,13 @@
 # The State of Art
 ## of the library till now.
 
+##Dec. 03 2013 
+--------------
+### 17.36
+Pretty sure that is necessary define a common base type, something like java.lang.Object but it has to be very simple, I would dare empty.
+
+I defined the name of the interface "cljgo/interface/NameInterface.go", so much fantasy...
+
 ## Dec. 02 2013 Very late at night but still the 02nd
 ---------------
 Thinking are arising several issues.
