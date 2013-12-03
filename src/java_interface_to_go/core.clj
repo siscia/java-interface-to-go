@@ -1,8 +1,7 @@
 (ns java-interface-to-go.core
   (:use [clojure.tools.cli :only [cli]])
   (:use [clojure.java.io :only [writer]])
-  (:use [java-interface-to-go.from-runtime :only [make-tree]]
-        )
+  (:use [java-interface-to-go.from-runtime :only [make-tree]])
   (:use [clojure.set :only [difference]]))
 
 ;; software to be run as command line, it takes in input a string, and it evals the class it represent:
@@ -14,6 +13,13 @@
   (when (> (count s) 0)
     (str (clojure.string/capitalize (subs s 0 1))
          (subs s 1))))
+
+(defn make-file-name [name]
+  (let [name (-> 
+              (re-seq #"(clojure.lang.|java.lang.)(.*)" name)
+              first
+              (nth 2))]
+    (str "cljgo/interface/" name)))
 
 (defn write-name [name wrtr]
   (.write wrtr (str "package " name "\n")))
@@ -64,16 +70,14 @@
      (when meth
        (do (println meth)
            (write-methods meth wrtr)))
-     (.write wrtr (str "}" "\n")))
-  ([]
-     nil))
+     (.write wrtr (str "}" "\n"))))
 
 (defn make-file [source dir]
-  (let [file-name (-> (str dir (:name source) ".go")
-                      clojure.string/lower-case)
+  (let [file-name (-> (str dir (make-file-name (:name source)) ".go"))
         interfaces (map make-tree (:interface source))
         interface-meth (map :methods interfaces)
-        super-class (make-tree (:super-class source))
+        super-class (when (:super-class source)
+                      (make-tree (:super-class source)))
         super-class-meth (:methods super-class)
         already-define-meth (set (concat interface-meth super-class-meth))]
     (with-open [wrtr (writer file-name)]
@@ -83,7 +87,6 @@
                        (:interface source)
                        (when-let [meth (difference (remove nil? (set (:methods source)))
                                                    (remove nil? already-define-meth)
-                                                   
                                                    )]
                          meth)
                        wrtr)
