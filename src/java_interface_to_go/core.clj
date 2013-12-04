@@ -24,11 +24,17 @@
   (-> 
    (re-seq #"(clojure.lang.|java.lang.)(.*)" name)
    first
-   (nth 2)))
+   (nth 2)
+   capitalize-first-only))
 
 (defn make-file-name [name]
   (let [name (get-name-class name)]
     (str "cljgo/interface/" name)))
+
+(defn name-import [name]
+  (let [name (get-name-class name)]
+    (println name)
+    (str "cljgo.interface." name)))
 
 (defn write-name [name wrtr]
   (.write wrtr (str "package " name "\n")))
@@ -36,30 +42,30 @@
 (defn write-extended [super-class interface wrtr]
   (.write wrtr (str "\n" "import(" "\n"))
   (when super-class
-    (.write wrtr (str "\t" "\"" (.getName super-class) "\"" "\n")))
+    (.write wrtr (str "\t" "\"" (make-file-name (.getName super-class)) "\"" "\n")))
   (when interface
     (doseq [inter interface]
       (.write wrtr (str "\t" "\""
-                        (-> (.getName inter)
-                            clojure.string/trim
-                            clojure.string/lower-case)
+                        (-> inter
+                            .getName
+                            name-import
+                            )
                         "\"" "\n"))))
   (.write wrtr ")\n"))
 
 (defn write-import-super-class [super-class wrtr]
   (when super-class
     (.write wrtr (str "\t"
-                      (-> super-class .getName make-file-name str
-                          clojure.string/trim
-                          clojure.string/lower-case)
+                      (-> super-class .getName name-import
+                          clojure.string/trim)
                       ".Interface\n"))))
 
 (defn write-import-extended-interface [interface wrtr]
   (doseq [inter interface]
     (.write wrtr (str "\t"
-                      (-> inter .getName  str
+                      (-> inter .getName  get-name-class
                           clojure.string/trim
-                          clojure.string/lower-case)
+                          )
                       ".Interface" "\n"))))
 
 (defn write-methods [meth wrtr]
