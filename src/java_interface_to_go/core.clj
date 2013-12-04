@@ -9,16 +9,25 @@
 ;; it is dangerous but it is suppose to be used only to generate other source file it stilll should be fine.
 ;; then the it spit the go interfaces.
 
+(def obj-meth
+  (-> java.lang.Object
+      make-tree
+      first
+      :methods))
+
 (defn capitalize-first-only [s]
   (when (> (count s) 0)
     (str (clojure.string/capitalize (subs s 0 1))
          (subs s 1))))
 
+(defn get-name-class [name]
+  (-> 
+   (re-seq #"(clojure.lang.|java.lang.)(.*)" name)
+   first
+   (nth 2)))
+
 (defn make-file-name [name]
-  (let [name (-> 
-              (re-seq #"(clojure.lang.|java.lang.)(.*)" name)
-              first
-              (nth 2))]
+  (let [name (get-name-class name)]
     (str "cljgo/interface/" name)))
 
 (defn write-name [name wrtr]
@@ -40,7 +49,7 @@
 (defn write-import-super-class [super-class wrtr]
   (when super-class
     (.write wrtr (str "\t"
-                      (-> super-class .getName str
+                      (-> super-class .getName make-file-name str
                           clojure.string/trim
                           clojure.string/lower-case)
                       ".Interface\n"))))
@@ -48,7 +57,7 @@
 (defn write-import-extended-interface [interface wrtr]
   (doseq [inter interface]
     (.write wrtr (str "\t"
-                      (-> inter .getName str
+                      (-> inter .getName  str
                           clojure.string/trim
                           clojure.string/lower-case)
                       ".Interface" "\n"))))
@@ -73,21 +82,25 @@
      (.write wrtr (str "}" "\n"))))
 
 (defn make-file [source dir]
+  ;; way to big need to be refactored 
   (let [file-name (-> (str dir (make-file-name (:name source)) ".go"))
-        interfaces (map make-tree (:interface source))
+        interfaces (flatten (map make-tree (:interface source)))
         interface-meth (map :methods interfaces)
+        ;;_ (println "--->" interfaces interface-meth)
         super-class (when (:super-class source)
                       (make-tree (:super-class source)))
         super-class-meth (:methods super-class)
-        already-define-meth (set (concat interface-meth super-class-meth))]
+        ;;_ (println "---@" super-class-meth (:super-class source))
+        already-define-meth (apply set (concat interface-meth super-class-meth))]
+    ;;(println already-define-meth)
     (with-open [wrtr (writer file-name)]
-      (write-name (:name source) wrtr)
+      (write-name (get-name-class (:name source)) wrtr)
       (write-extended (:super-class source) (:interface source) wrtr)
       (write-interface (:super-class source)
                        (:interface source)
-                       (when-let [meth (difference (remove nil? (set (:methods source)))
+                       (when-let [meth (difference (set (remove nil? (:methods source)))
                                                    (remove nil? already-define-meth)
-                                                   )]
+                                                   (set obj-meth))]
                          meth)
                        wrtr)
       (.write wrtr "\n"))
@@ -100,5 +113,5 @@
 
 (defn -main [input & args]
   (let [[options args banner] (arguments-receiver args)
-        tree (make-tree (class [:a]))]
+        tree (make-tree (eval input))]
     (make-file (first tree) (options :output))))
