@@ -1,6 +1,12 @@
 # The State of Art
 ## of the library till now.
 
+##Dec. 04 2013
+### 22.44
+From now I believe I can go ahed without implemeting nothing under clojure.lang.Obj 
+
+I made some progress in the autogenerating of the code, I don't know if it will be really usefull at all, for now however it is being very very useful.
+
 ##Dec. 03 2013 
 --------------
 ### 17.36
