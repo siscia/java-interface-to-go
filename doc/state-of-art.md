@@ -2,6 +2,7 @@
 ## of the library till now.
 
 ##Dec. 04 2013
+--------------
 ### 22.44
 From now I believe I can go ahed without implemeting nothing under clojure.lang.Obj 
 
@@ -14,8 +15,9 @@ Pretty sure that is necessary define a common base type, something like java.lan
 
 I defined the name of the interface "cljgo/interface/NameInterface.go", so much fantasy...
 
-## Dec. 02 2013 Very late at night but still the 02nd
+## Dec. 02 2013 
 ---------------
+###Very late at night but still the 02nd
 Thinking are arising several issues.
 
 First and again the names, I need to define some kind of standard, thinking about something like: clojurego.NameOfInterface
