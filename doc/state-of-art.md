@@ -8,6 +8,9 @@ From now I believe I can go ahed without implemeting nothing under clojure.lang.
 
 I made some progress in the autogenerating of the code, I don't know if it will be really usefull at all, for now however it is being very very useful.
 
+### 23.55
+I start to believe that I should make something real in Go to be sure to have understand everything behind it's type system
+
 ##Dec. 03 2013 
 --------------
 ### 17.36

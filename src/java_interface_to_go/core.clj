@@ -64,8 +64,7 @@
   (doseq [inter interface]
     (.write wrtr (str "\t"
                       (-> inter .getName  get-name-class
-                          clojure.string/trim
-                          )
+                          clojure.string/trim)
                       ".Interface" "\n"))))
 
 (defn write-methods [meth wrtr]
@@ -87,31 +86,38 @@
            (write-methods meth wrtr)))
      (.write wrtr (str "}" "\n"))))
 
-(defn make-file [source dir]
-  ;; way to big need to be refactored 
-  (let [file-name (-> (str dir (make-file-name (:name source)) ".go"))
-        interfaces (flatten (map make-tree (:interface source)))
-        interface-meth (map :methods interfaces)
-        ;;_ (println "--->" interfaces interface-meth)
-        super-class (when (:super-class source)
-                      (make-tree (:super-class source)))
-        super-class-meth (:methods super-class)
-        ;;_ (println "---@" super-class-meth (:super-class source))
-        already-define-meth (apply set (concat interface-meth super-class-meth))]
-    ;;(println already-define-meth)
-    (with-open [wrtr (writer file-name)]
-      (write-name (get-name-class (:name source)) wrtr)
-      (write-extended (:super-class source) (:interface source) wrtr)
-      (write-interface (:super-class source)
-                       (:interface source)
-                       (when-let [meth (difference (set (remove nil? (:methods source)))
-                                                   (remove nil? already-define-meth)
-                                                   (set obj-meth))]
-                         meth)
-                       wrtr)
-      (.write wrtr "\n"))
-    (println file-name)
-    file-name))
+(defn already-define-meth [interface super-class]
+  (let [interfaces (flatten (map make-tree interface))
+        int-meth (map :methods interfaces)
+        super-class (when super-class
+                      (make-tree super-class))
+        super-meth (:methods super-class)]
+    (apply set [(concat int-meth super-meth)])))
+
+(defn make-file
+  ([source]
+     (make-file source ""))
+  ([source dir]
+     (let [name (get-name-class (:name source))
+           file-name (str (make-file-name (:name source)) ".go")]
+       (with-open [wrtr (writer file-name)]
+         (write-name name wrtr)
+         (write-extended (:super-class source)
+                         (:interface source)
+                         wrtr)
+         (write-interface (:super-class source)
+                          (:interface source)
+                          (when-let [meth (difference
+                                           (set (remove nil?
+                                                        (:methods source)))
+                                           (already-define-meth
+                                            (:interface source)
+                                            (:super-class source)))]
+                            meth)
+                          wrtr)
+         (.write wrtr "\n"))
+       (println file-name)
+       file-name)))
 
 (defn arguments-receiver [args]
   (cli args
