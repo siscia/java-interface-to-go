@@ -5,6 +5,6 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [org.clojure/tools.cli "0.2.4"]
-                 [org.clojure/core.async "0.1.256.0-1bf8cf-alpha"]
+                 [de.ubercode.clostache/clostache "1.3.1"]
                  [dorothy "0.0.4"]]
   :main java-interface-to-go.core)
